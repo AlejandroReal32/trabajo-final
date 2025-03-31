@@ -1,5 +1,5 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { Book, BookmarkPlus, BookOpen, CheckCircle, ChevronDown } from 'lucide-react';
+import React from 'react';
+import { Book, BookmarkPlus, BookOpen, CheckCircle } from 'lucide-react';
 import { cn } from '../lib/utils';
 
 interface BookCardProps {
@@ -15,72 +15,40 @@ interface BookCardProps {
     };
   };
   onAddToList: (listName: string) => void;
+  currentList?: string;
 }
 
-function DropdownMenu({ onAddToList }: { onAddToList: (listName: string) => void }) {
-  const [isOpen, setIsOpen] = useState(false);
-  const dropdownRef = useRef<HTMLDivElement>(null);
-
-  // Cerrar el dropdown cuando se hace clic fuera de él
-  useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-        setIsOpen(false);
-      }
-    }
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, []);
-
+function CollectionButtons({ onAddToList, currentList }: { onAddToList: (listName: string) => void, currentList?: string }) {
   const options = [
-    { value: 'want-to-read', label: 'Want to Read', icon: <BookmarkPlus size={16} />, color: 'bg-blue-100 text-blue-700 hover:bg-blue-200' },
-    { value: 'reading', label: 'Reading', icon: <BookOpen size={16} />, color: 'bg-yellow-100 text-yellow-700 hover:bg-yellow-200' },
-    { value: 'finished', label: 'Finished', icon: <CheckCircle size={16} />, color: 'bg-green-100 text-green-700 hover:bg-green-200' },
+    { value: 'want-to-read', label: 'Quiero leer', icon: <BookmarkPlus size={16} />, color: 'bg-blue-100 text-blue-700 hover:bg-blue-200' },
+    { value: 'reading', label: 'Leyendo', icon: <BookOpen size={16} />, color: 'bg-yellow-100 text-yellow-700 hover:bg-yellow-200' },
+    { value: 'finished', label: 'Terminado', icon: <CheckCircle size={16} />, color: 'bg-green-100 text-green-700 hover:bg-green-200' },
   ];
 
   return (
-    <div className="relative" ref={dropdownRef}>
-      <button
-        onClick={() => setIsOpen(!isOpen)}
-        className={cn(
-          "flex items-center justify-between w-full px-3 py-2 rounded-lg text-sm",
-          "bg-gray-100 text-gray-700 hover:bg-gray-200"
-        )}
-      >
-        <span className="flex items-center gap-1">
-          <Book size={16} />
-          <span>Agregar a colección</span>
-        </span>
-        <ChevronDown size={16} className={cn("transition-transform", isOpen && "transform rotate-180")} />
-      </button>
-      
-      {isOpen && (
-        <div className="absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg overflow-hidden">
-          {options.map((option) => (
-            <button
-              key={option.value}
-              onClick={() => {
-                onAddToList(option.value);
-                setIsOpen(false);
-              }}
-              className={cn(
-                "flex items-center gap-2 w-full px-3 py-2 text-sm text-left",
-                option.color
-              )}
-            >
-              {option.icon}
-              {option.label}
-            </button>
-          ))}
-        </div>
-      )}
+    <div className="flex gap-2">
+      {options.map((option) => (
+        <button
+          key={option.value}
+          onClick={() => onAddToList(option.value)}
+          disabled={currentList === option.value}
+          className={cn(
+            "flex items-center gap-1 px-3 py-2 rounded-lg text-sm flex-1 justify-center",
+            option.color,
+            currentList === option.value
+              ? "opacity-50 cursor-not-allowed"
+              : "transition-colors duration-200"
+          )}
+        >
+          {option.icon}
+          <span className="hidden sm:inline">{option.label}</span>
+        </button>
+      ))}
     </div>
   );
 }
 
-export function BookCard({ book, onAddToList }: BookCardProps) {
+export function BookCard({ book, onAddToList, currentList }: BookCardProps) {
   if (!book?.volumeInfo) {
     console.error('Datos del libro inválidos:', book);
     return null;
@@ -108,9 +76,7 @@ export function BookCard({ book, onAddToList }: BookCardProps) {
         <p className="text-sm text-gray-500 line-clamp-2 mb-4">
           {description}
         </p>
-        <div className="relative">
-          <DropdownMenu onAddToList={onAddToList} />
-        </div>
+        <CollectionButtons onAddToList={onAddToList} currentList={currentList} />
       </div>
     </div>
   );

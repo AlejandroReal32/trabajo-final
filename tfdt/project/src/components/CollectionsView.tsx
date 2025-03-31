@@ -4,6 +4,24 @@ import { BookCard } from './BookCard';
 import { Book, BookmarkPlus, BookOpen, CheckCircle } from 'lucide-react';
 import { cn } from '../lib/utils';
 
+const tabs = [
+  {
+    id: 'want-to-read',
+    label: 'Quiero leer',
+    icon: BookmarkPlus
+  },
+  {
+    id: 'reading',
+    label: 'Leyendo',
+    icon: BookOpen
+  },
+  {
+    id: 'finished',
+    label: 'Terminados',
+    icon: CheckCircle
+  }
+];
+
 interface BookCollection {
   id: string;
   book_id: string;
@@ -149,64 +167,58 @@ export function CollectionsView({ userId, onBackToSearch }: CollectionsViewProps
   }
 
   return (
-    <div className="bg-gray-50 p-4 rounded-lg">
-      <div className="flex justify-between items-center mb-6">
-        <h2 className="text-xl font-bold">Mis Colecciones</h2>
-        <button
-          onClick={onBackToSearch}
-          className="px-3 py-1 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 text-sm"
-        >
-          Volver a la búsqueda
-        </button>
-      </div>
+    <div className="container mx-auto px-4 py-8">
+      <button
+        onClick={onBackToSearch}
+        className="mb-4 flex items-center text-blue-600 hover:text-blue-800"
+      >
+        <Book className="mr-2" /> Volver a la búsqueda
+      </button>
 
-      <div className="flex space-x-2 mb-4">
-        {['want-to-read', 'reading', 'finished'].map((tab) => (
-          <button
-            key={tab}
-            onClick={() => setActiveTab(tab as any)}
-            className={tabClasses(tab)}
-          >
-            <div className="flex items-center gap-1">
-              {getTabIcon(tab)}
-              <span>
-                {tab === 'want-to-read' ? 'Quiero leer' : 
-                 tab === 'reading' ? 'Leyendo' : 'Terminados'}
-              </span>
-              <span className="ml-1 bg-gray-200 text-gray-700 px-1.5 py-0.5 rounded-full text-xs">
-                {collections[tab as keyof typeof collections].length}
-              </span>
-            </div>
-          </button>
-        ))}
+      <div className="mb-6 border-b border-gray-200">
+        <nav className="-mb-px flex space-x-8" aria-label="Tabs">
+          {tabs.map((tab) => {
+            const Icon = tab.icon;
+            return (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id as 'want-to-read' | 'reading' | 'finished')}
+                className={cn(
+                  'flex items-center py-4 px-4 border-b-2 font-medium text-sm transition-colors duration-200',
+                  activeTab === tab.id
+                    ? 'border-blue-500 text-blue-600 bg-blue-50'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 hover:bg-gray-50'
+                )}
+              >
+                <Icon className="h-5 w-5 mr-2" />
+                {tab.label}
+                <span className="ml-2 bg-gray-200 text-gray-700 px-2 py-0.5 rounded-full text-xs">
+                  {collections[tab.id as keyof typeof collections].length}
+                </span>
+              </button>
+            );
+          })}
+        </nav>
       </div>
 
       {loading ? (
-        <div className="text-center py-8">
-          <p className="text-gray-600">Cargando colecciones...</p>
+        <div className="flex justify-center items-center h-64">
+          <div className="text-gray-500">Cargando tus libros...</div>
         </div>
       ) : collections[activeTab].length === 0 ? (
-        <div className="text-center py-8 bg-white rounded-lg shadow-sm">
-          <p className="text-gray-600">
-            No tienes libros en esta colección.
-          </p>
+        <div className="flex flex-col items-center justify-center h-64 text-gray-500">
+          <div className="text-xl mb-2">No hay libros en esta colección</div>
+          <div className="text-sm">Agrega libros desde la búsqueda</div>
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
           {collections[activeTab].map((item) => (
-            <div key={item.book_id} className="relative">
-              <BookCard
-                book={{
-                  id: item.book_id,
-                  volumeInfo: item.book.volumeInfo
-                }}
-                onAddToList={(listName) => {
-                  if (listName !== activeTab) {
-                    handleMoveBook(item.book_id, activeTab, listName);
-                  }
-                }}
-              />
-            </div>
+            <BookCard
+              key={item.book_id}
+              book={item.book}
+              onMoveToList={(toList) => handleMoveBook(item.book_id, activeTab, toList)}
+              currentList={activeTab}
+            />
           ))}
         </div>
       )}
